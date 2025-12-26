@@ -1,12 +1,10 @@
-from barcode import Code128
-from barcode.writer import ImageWriter
 import tempfile
+import barcode
+from barcode.writer import ImageWriter
 
 def create_barcode_temp(value):
-    barcode = Code128(value, writer=ImageWriter())
-
+    code = barcode.get("code128", value, writer=ImageWriter())
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+    code.write(tmp)
     tmp.close()
-
-    barcode.save(tmp.name.replace(".png", ""))
     return tmp.name
