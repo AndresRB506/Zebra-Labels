@@ -3,20 +3,10 @@ from barcode import Code128
 from barcode.writer import ImageWriter
 
 
-def create_barcode(value, filename):
-    png_file = filename + ".png"
+def create_barcode(data: str, filename: str):
+    folder = os.path.dirname(filename)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
 
-    # Borrar barcode viejo si existe
-    if os.path.exists(png_file):
-        os.remove(png_file)
-
-    writer = ImageWriter()
-    writer.set_options({
-        "write_text": False,     # SIN texto debajo
-        "module_height": 8.0,    # Altura del barcode
-        "module_width": 0.3,     # Grosor de barras
-        "quiet_zone": 2.0
-    })
-
-    barcode = Code128(value, writer=writer)
+    barcode = Code128(data, writer=ImageWriter())
     barcode.save(filename)
