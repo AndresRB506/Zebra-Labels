@@ -12,7 +12,7 @@ WorkOrder = Dict[str, object]
 
 
 class EditWorkOrdersDialog(QDialog):
-    HEADERS = ["Part #", "TAG + DESCRIPTION", "Barcode code", "WO #", "TOTAL QTY"]
+    HEADERS = ["EC-Part #", "TAG + DESCRIPTION", "PLNM-Part #", "WO #", "TOTAL QTY"]
 
     def __init__(self, parent, work_orders: Optional[List[WorkOrder]] = None, *, title: str = "Work Orders"):
         super().__init__(parent)
