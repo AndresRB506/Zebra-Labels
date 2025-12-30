@@ -1,14 +1,15 @@
 from __future__ import annotations
-from core.edit_wo_dialog import edit_work_orders_dialog
 
 from PySide6.QtWidgets import QMessageBox
 
 from core.flow_logic import (
-    collect_work_orders_via_dialogs,
     plan_sheets_via_dialogs,
     render_summary_text,
 )
+
+from core.edit_wo_dialog import work_orders_table_dialog
 from core.docx_adapter import generate_doc_with_gui_color
+
 
 
 class Controller:
@@ -27,16 +28,13 @@ class Controller:
             QMessageBox.warning(self.ui, "Missing LOT", "Please enter a LOT number.")
             return
 
-        # 1) Collect Work Orders (1-4) using dialogs
-        work_orders = collect_work_orders_via_dialogs(self.ui)
+            # 1) Enter Work Orders (table, single window)
+        work_orders = work_orders_table_dialog(self.ui, None, title="Enter Work Orders")
         if work_orders is None:
             self._log("Cancelled while entering Work Orders.")
             return
-        if len(work_orders) == 0:
-            QMessageBox.warning(self.ui, "Missing data", "Please enter at least one Work Order.")
-            return
 
-        # 1.1) OPTIONAL: Modify Work Orders (same as console flow)
+        # 1.1) OPTIONAL: Modify Work Orders (same table dialog)
         want_edit = QMessageBox.question(
             self.ui,
             "Modify Work Orders",
@@ -44,11 +42,13 @@ class Controller:
             QMessageBox.Yes | QMessageBox.No
         )
         if want_edit == QMessageBox.Yes:
-            updated = edit_work_orders_dialog(self.ui, work_orders)
+            updated = work_orders_table_dialog(self.ui, work_orders, title="Edit Work Orders")
             if updated is None:
                 self._log("Cancelled while editing Work Orders.")
                 return
             work_orders = updated
+
+
 
 
         # 2) Nesting loop (allow re-nest)

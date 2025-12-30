@@ -12,40 +12,43 @@ WorkOrder = Dict[str, object]
 
 
 class EditWorkOrdersDialog(QDialog):
-    """
-    Simple editor to modify existing Work Orders before nesting.
-    UI-only change. DOCX layout logic remains untouched.
-    """
     HEADERS = ["Part #", "TAG + DESCRIPTION", "Barcode code", "WO #", "TOTAL QTY"]
 
-    def __init__(self, parent, work_orders: List[WorkOrder]):
+    def __init__(self, parent, work_orders: Optional[List[WorkOrder]] = None, *, title: str = "Work Orders"):
         super().__init__(parent)
-        self.setWindowTitle("Edit Work Orders")
+        self.setWindowTitle(title)
         self.resize(900, 420)
 
-        self._original = work_orders
+        if work_orders is None:
+            work_orders = []
+
         self._result: Optional[List[WorkOrder]] = None
 
         layout = QVBoxLayout(self)
-
-        layout.addWidget(QLabel("Edit the fields below. Click Save to apply changes."))
+        layout.addWidget(QLabel("Fill the table. Click Save to continue."))
 
         self.table = QTableWidget()
         self.table.setColumnCount(len(self.HEADERS))
         self.table.setHorizontalHeaderLabels(self.HEADERS)
-        self.table.setRowCount(len(work_orders))
-        self.table.setEditTriggers(QTableWidget.AllEditTriggers)
+
+        # If no WOs provided, start with 1 empty row
+        rows = len(work_orders) if len(work_orders) > 0 else 1
+        self.table.setRowCount(rows)
+
         layout.addWidget(self.table)
 
-        # Fill table
+        # Fill rows (if any)
         for r, wo in enumerate(work_orders):
             self._set_item(r, 0, str(wo.get("part", "")).strip())
             self._set_item(r, 1, str(wo.get("tag_desc", "")).strip())
             self._set_item(r, 2, str(wo.get("code", "")).strip())
             self._set_item(r, 3, str(wo.get("work_order", "")).strip())
-            self._set_item(r, 4, str(int(wo.get("total_qty", 0))))
+            self._set_item(r, 4, str(int(wo.get("total_qty", 1))))
 
-        # Buttons
+        # If started empty, prefill qty with 1
+        if len(work_orders) == 0:
+            self._set_item(0, 4, "1")
+
         btn_row = QHBoxLayout()
         self.add_btn = QPushButton("Add WO")
         self.del_btn = QPushButton("Remove Selected")
@@ -70,10 +73,15 @@ class EditWorkOrdersDialog(QDialog):
         self.table.setItem(r, c, item)
 
     def _add_row(self):
+        if self.table.rowCount() >= 4:
+            QMessageBox.warning(self, "Limit reached", "Maximum 4 Work Orders allowed.")
+            return
+
         r = self.table.rowCount()
         self.table.insertRow(r)
         for c in range(self.table.columnCount()):
             self._set_item(r, c, "" if c != 4 else "1")
+
 
     def _remove_selected(self):
         rows = sorted({idx.row() for idx in self.table.selectedIndexes()}, reverse=True)
@@ -91,6 +99,10 @@ class EditWorkOrdersDialog(QDialog):
             code = (self.table.item(r, 2).text() if self.table.item(r, 2) else "").strip()
             wo_num = (self.table.item(r, 3).text() if self.table.item(r, 3) else "").strip()
             qty_txt = (self.table.item(r, 4).text() if self.table.item(r, 4) else "").strip()
+
+            # Skip completely empty rows
+            if not part and not tag_desc and not code and not wo_num and not qty_txt:
+                continue
 
             if not part:
                 QMessageBox.warning(self, "Validation", f"Row {r+1}: Part # is required.")
@@ -116,6 +128,11 @@ class EditWorkOrdersDialog(QDialog):
                 }
             )
 
+        # 🚨 AQUI VA EL LIMITE DE 4 WO
+        if len(wos) > 4:
+            QMessageBox.warning(self, "Limit reached", "Maximum 4 Work Orders allowed.")
+            return
+
         if len(wos) == 0:
             QMessageBox.warning(self, "Validation", "You must have at least one Work Order.")
             return
@@ -123,15 +140,17 @@ class EditWorkOrdersDialog(QDialog):
         self._result = wos
         self.accept()
 
+
     def result_work_orders(self) -> Optional[List[WorkOrder]]:
         return self._result
 
 
-def edit_work_orders_dialog(parent, work_orders: List[WorkOrder]) -> Optional[List[WorkOrder]]:
+def work_orders_table_dialog(parent, work_orders: Optional[List[WorkOrder]], *, title: str) -> Optional[List[WorkOrder]]:
     """
+    Unified dialog for both initial entry and editing.
     Returns updated list if user saves, None if cancelled.
     """
-    dlg = EditWorkOrdersDialog(parent, work_orders)
+    dlg = EditWorkOrdersDialog(parent, work_orders, title=title)
     if dlg.exec() == QDialog.Accepted:
         return dlg.result_work_orders()
     return None
