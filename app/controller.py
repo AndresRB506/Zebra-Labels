@@ -1,4 +1,5 @@
 from __future__ import annotations
+from core.edit_wo_dialog import edit_work_orders_dialog
 
 from PySide6.QtWidgets import QMessageBox
 
@@ -34,6 +35,21 @@ class Controller:
         if len(work_orders) == 0:
             QMessageBox.warning(self.ui, "Missing data", "Please enter at least one Work Order.")
             return
+
+        # 1.1) OPTIONAL: Modify Work Orders (same as console flow)
+        want_edit = QMessageBox.question(
+            self.ui,
+            "Modify Work Orders",
+            "Do you want to modify/edit the Work Orders before nesting?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if want_edit == QMessageBox.Yes:
+            updated = edit_work_orders_dialog(self.ui, work_orders)
+            if updated is None:
+                self._log("Cancelled while editing Work Orders.")
+                return
+            work_orders = updated
+
 
         # 2) Nesting loop (allow re-nest)
         while True:
