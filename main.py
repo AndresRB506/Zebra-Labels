@@ -52,6 +52,28 @@ def input_yes_no(prompt: str) -> bool:
             return ans == "Y"
         print("❌ Please answer Y or N.")
 
+def input_choice(prompt: str, choices: list[str]) -> str:
+    """
+    Ask the user to choose one option from a list (case-insensitive).
+    Returns the chosen option in UPPERCASE.
+    """
+    normalized = [c.upper() for c in choices]
+    while True:
+        ans = input(prompt).strip().upper()
+        if ans in normalized:
+            return ans
+        print(f"❌ Please choose one of: {', '.join(normalized)}")
+
+
+def sanitize_filename(text: str) -> str:
+    """
+    Remove characters that are not allowed in Windows file names.
+    """
+    invalid = '<>:"/\\|?*'
+    for ch in invalid:
+        text = text.replace(ch, "")
+    return text.strip()
+
 
 # -----------------------------
 # Footer: "Page X of Y"
@@ -276,7 +298,14 @@ def generate_doc(lot_number: str, work_orders: list[dict], sheets: list[dict]) -
     # Footer numbering
     add_page_x_of_y_footer(doc)
 
-    filename = f"output/WorkOrder_Labels_{int(time.time())}.docx"
+    # Ask user which color to include in the file name
+    color = input_choice("Choose label color (WHITE-R0/ORANGE-R4/GREEN-R6/YELLOW-R8): ",
+                        ["WHITE", "ORANGE", "GREEN", "YELLOW"])
+
+    # Build file name: LOT <lot_number> <COLOR>.docx
+    base_name = sanitize_filename(f"LOT {lot_number} {color}")
+    filename = f"output/{base_name}.docx"
+
     doc.save(filename)
     return filename
 
