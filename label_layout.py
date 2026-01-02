@@ -45,30 +45,47 @@ def add_centered_text(cell, text, size=10, bold=False):
 # -------------------------------------------------
 # COVER PAGE LABELS
 # -------------------------------------------------
-
 def add_cover_label(cell, lot_number):
     """
-    Create the LOT label used on the cover page.
-
-    This occupies a full slot and only shows:
-        LOT
-        <lot_number>
+    Cover slot format:
+      Cover Page
+      LOT # <lot_number>
     """
     clear_cell(cell)
-    add_centered_text(cell, "LOT", size=30, bold=True)
-    add_centered_text(cell, lot_number, size=30, bold=True)
+    add_centered_text(cell, "Cover Page", size=24, bold=True)
+    add_centered_text(cell, f"LOT # {lot_number}", size=24, bold=True)
 
 
-def add_sheet_label(cell, sheet_number):
+
+def add_sheet_label(cell, text):
     """
-    Create a SHEET label.
+    Sheet slot format.
+    The text is already pre-formatted by main.py.
 
-    This label consumes exactly one slot and indicates
-    the laser nesting sheet number.
+    Example received text:
+      "1 - LOT # 08500"
+
+    Output:
+      Sheet # 1
+      LOT # 08500
     """
     clear_cell(cell)
-    add_centered_text(cell, "SHEET", size=24, bold=True)
-    add_centered_text(cell, str(sheet_number), size=24, bold=True)
+
+    # Split sheet number and lot
+    if "-" in text:
+        sheet_part, lot_part = text.split("-", 1)
+        sheet_part = sheet_part.strip()
+        lot_part = lot_part.strip()
+    else:
+        sheet_part = text.strip()
+        lot_part = ""
+
+    add_centered_text(cell, f"Sheet # {sheet_part}", size=20, bold=True)
+
+    if lot_part:
+        add_centered_text(cell, lot_part, size=20, bold=True)
+
+
 
 
 # -------------------------------------------------
@@ -96,10 +113,10 @@ def add_workorder_label(cell, wo, lot_number):
     clear_cell(cell)
 
     # PART NUMBER (largest text)
-    add_centered_text(cell, wo["part"], size=18, bold=True)
+    add_centered_text(cell, wo["part"], size=26, bold=True)
 
     # TAG + DESCRIPTION (single combined line)
-    add_centered_text(cell, wo["tag_desc"], size=18)
+    add_centered_text(cell, wo["tag_desc"], size=20)
 
     # -------------------------------------------------
     # BARCODE
@@ -122,10 +139,10 @@ def add_workorder_label(cell, wo, lot_number):
     # -------------------------------------------------
 
     # Work Order number
-    add_centered_text(cell, f'WO {wo["work_order"]}', size=15)
+    add_centered_text(cell, f'WO {wo["work_order"]}', size=16)
 
     # Lot number
-    add_centered_text(cell, f'LOT {lot_number}', size=15)
+    add_centered_text(cell, f'LOT {lot_number}', size=16)
 
     # Quantity handling:
     # - Default → QTY 1
@@ -135,5 +152,5 @@ def add_workorder_label(cell, wo, lot_number):
         add_centered_text(
             cell,
             f'QTY {wo.get("qty_override", 1)}',
-            size=15
+            size=16
         )

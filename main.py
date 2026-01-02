@@ -8,6 +8,8 @@ from label_layout import (
     add_workorder_label,
 )
 
+
+
 # Footer fields for "Page X of Y"
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -241,8 +243,11 @@ def generate_doc(lot_number: str, work_orders: list[dict], sheets: list[dict]) -
     # ---------------- COVER PAGE ----------------
     table, slot_idx = new_page()
 
-    # Slot 0: LOT
+    # Slot 0: LOT (custom text)
     add_cover_label(table.cell(0, 0), lot_number)
+
+
+
 
     # Slots 1-4: WOs (slot 5 stays blank)
     slot_idx = 1
@@ -272,8 +277,10 @@ def generate_doc(lot_number: str, work_orders: list[dict], sheets: list[dict]) -
             table, slot_idx = new_page()
 
         r, c = SLOTS[slot_idx]
-        add_sheet_label(table.cell(r, c), sh["sheet_number"])
+        sheet_text = f"{sh['sheet_number']} - LOT # {lot_number}"
+        add_sheet_label(table.cell(r, c), sheet_text)
         slot_idx += 1
+
 
         # Print labels per piece
         for i, qty in sh["allocations"]:
